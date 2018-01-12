@@ -170,7 +170,39 @@ gp.gpa <- function(dta, para, scaling.factor) {
   return(gp)
 }
 
-
+gc.gpa <- function(sim, f) {
+  
+  para <- sim$REG
+  
+  qs <- seq(.001, .995, .001)
+  
+  x <- lapply(f, function(x) {data.frame(q = quagpa(qs, x$REG))})
+  qaux <- data.table(rbindlist(x, idcol = 'sample'), probs = seq_len(dim(x[[1]])[1]))
+  
+  q <- qaux[, .(val = quantile(q, c(.05, .25, .75, .95)),
+                q = as.character(c(.05, .25, .75, .95))), 
+            by = probs]
+  
+  qm <- dcast(q, probs ~ q, value.var = 'val')
+  
+  gpa.q <- data.table(x = qs,
+                      y = if(para[3] == 0) {
+                        para[1] + para[2]*(-log(1 - qs))
+                      } else {
+                        para[1] + para[2]/para[3]*(1 - (1 - qs)^(para[3]))
+                      })
+  
+  gc <- ggplot(qm) +
+    geom_ribbon(aes(x = -log(-log(probs*diff(qs)[1])), ymin = `0.05`, ymax = `0.95`), alpha = .25) +
+    geom_ribbon(aes(x = -log(-log(probs*diff(qs)[1])), ymin = `0.25`, ymax = `0.75`), alpha = .75) +
+    geom_line(data = gpa.q, aes(x = -log(-log(x)), y = y, group = 1), col = 'red4', lwd = .75) +
+    theme_bw()
+  
+  return(gc)
+  
+}
+  
+  
 AD.test.multidist <- function(val, location = 0, scale = 1, shape = 0, distr = 'gev') {
   
   val <- unlist(val)
