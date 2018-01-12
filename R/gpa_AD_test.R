@@ -3,6 +3,7 @@ library(ggplot2)
 library(lmom)
 
 source('R/aux_functions.R')
+source('R/aux_fit_smp.R')
 
 trim <- c(0,0)
 smp <- 1000
@@ -27,14 +28,14 @@ ad.mx <- para.mx[, .(base_ad = AD.test.multidist(val = dV, # vypocet AD statisti
                                                  location = unique(xi), 
                                                  scale = unique(alpha), 
                                                  shape = unique(k), 
-                                                 distr = 'gpa')), 
+                                                 dist = 'gpa')), 
                  by = SP_ID]
 
 AD.SMP <- lapply(1:smp, function(i) { 
   ad.dV <- para.mx[, .(dV = quagpa(runif(length(dV)), c(unique(xi), unique(alpha), unique(k)))), by = SP_ID] # samplovani GPA hodnot
   ad.para <- dcast(ad.dV[, .(val = gpa.para(moje.lm(dV)), para = c('xi', 'alpha', 'k')), by = SP_ID], SP_ID ~ para, value.var = 'val') # paramety samplu
   ad.res <- merge(ad.dV, ad.para)
-  ad.res[, .(smp_ad = AD.test.multidist(val = dV, location = unique(xi), scale = unique(alpha), shape = unique(k), distr = 'gpa')), by = SP_ID] # AD stat. pro samply
+  ad.res[, .(smp_ad = AD.test.multidist(val = dV, location = unique(xi), scale = unique(alpha), shape = unique(k), dist = 'gpa')), by = SP_ID] # AD stat. pro samply
 })
 
 ad.smp <- do.call(rbind, AD.SMP)

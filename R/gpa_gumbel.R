@@ -43,7 +43,15 @@ gp.gpa(dta.fit$data, dta.fit$REG, dta.fit$scaling_factor) + ggtitle(paste('Clust
 
 }
 
-s <- smp.gpa(dta.fit, length = 100,  type = 'zero')
+s <- smp.gpa(dta.fit, length = 1000,  type = 'nonpar')
 f <- lapply(s, sim)
 
 gc.gpa(dta.fit, f)
+
+s <- smp.gpa(dta.fit, length = 1000,  type = 'zero')
+f <- lapply(s, sim)
+
+gc.gpa(dta.fit, f)
+
+
+

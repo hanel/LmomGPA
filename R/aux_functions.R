@@ -203,7 +203,7 @@ gc.gpa <- function(sim, f) {
 }
   
   
-AD.test.multidist <- function(val, location = 0, scale = 1, shape = 0, distr = 'gev') {
+AD.test.multidist <- function(val, location = 0, scale = 1, shape = 0, dist = 'gev') {
   
   val <- unlist(val)
   val <- val[!is.na(val)]
@@ -212,27 +212,28 @@ AD.test.multidist <- function(val, location = 0, scale = 1, shape = 0, distr = '
   scale <- unlist(scale)
   shape <- unlist(shape)
   
-  if (distr == 'gev') {
-    # if (shape == 0) {
-    #   p <- exp(-exp(-(val - location)/scale))
-    # } else {
-    #   p <- exp(-pmax(1 + shape*(val - location)/scale, 0)^(-1/shape))
-    # }
-    p <- lmom::cdfgev(x = val, c(location, scale, shape))
-  }
+  p <- do.call(what = paste0('p', dist), args = list(q = val, para = c(location, scale, shape)))
   
-  if (distr == 'gpa') {
-    # if (shape == 0) {
-    #   p <- 1 - exp(-pmax(val - location, 0)/scale)
-    # } else {
-    #   p <- pmax(1 + shape*pmax(val - location, 0)/scale, 0)
-    #   p <- 1 - p^(-1/shape)
-    # }
-    p <- lmom::cdfgpa(x = val, c(location, scale, shape))
-  }
+  # if (distr == 'gev') {
+  #   # if (shape == 0) {
+  #   #   p <- exp(-exp(-(val - location)/scale))
+  #   # } else {
+  #   #   p <- exp(-pmax(1 + shape*(val - location)/scale, 0)^(-1/shape))
+  #   # }
+  #   p <- lmom::cdfgev()
+  # }
+  # 
+  # if (distr == 'gpa') {
+  #   # if (shape == 0) {
+  #   #   p <- 1 - exp(-pmax(val - location, 0)/scale)
+  #   # } else {
+  #   #   p <- pmax(1 + shape*pmax(val - location, 0)/scale, 0)
+  #   #   p <- 1 - p^(-1/shape)
+  #   # }
+  #   p <- lmom::cdfgpa(x = val, c(location, scale, shape))
+  # }
   
-  u <- sort(p[(p != 0) & (p != 1)]) ################################# ?
-  # plot(u)
+  u <- sort(p[(p != 0) & (p != 1)])
   nr <- length(u)
   -nr - 1/nr*sum((2*1:nr - 1)*log(u) + (2*nr - 2*1:nr + 1)*log(1 - u))
   
@@ -327,4 +328,54 @@ gg.homo <- function(lmoms) {
     labs(x = 'L-skweness', y = 'L-CV')
   
   return(homo)
+}
+
+rgev <- function(n, para = c(xi, alpha, k)) {
+  
+  qgev(runif(n, para))
+}
+
+qgev <- function(p, para = c(xi, alpha, k)) {
+  
+  if (para[3] == 0) {
+    para[1] - para[2]*log(-log(p))
+  } else {
+    para[1] + para[2]/para[3]*(1 - (-log(p))^para[3])
+  }
+}
+
+pgev <- function(q, para = c(xi, alpha, k)) {
+  
+  if (para[3] == 0) {
+    out <- (q - para[1])/para[2]
+  } else {
+    out <- -1/para[3]*log(pmax(0, 1 - para[3]*(q - para[1])/para[2]))
+  }
+      
+  return(exp(-exp(-out)))
+}
+
+rgpa <- function(n, para = c(xi, alpha, k)) {
+  
+  qgpa(runif(n, para))
+}
+
+qgpa <- function(p, para = c(xi = 0, alpha = 1, k = 0)) {
+  
+  if (para[3] == 0) {
+    para[1] + para[2]*(-log(1 - p))
+  } else {
+    para[1] + para[2]/para[3]*(1 - (1 - p)^(para[3]))
+  }
+}
+
+pgpa <- function(q, para = c(xi, alpha, k)) {
+  
+  if (para[3] == 0) {
+    out <- (q - para[1])/para[2]
+  } else {
+    out <- -1/para[3] * log(pmax(0, 1 - para[3] * (q - para[1])/para[2]))
+  }
+    
+  return(1 - exp(-pmax(out, 0)))
 }
