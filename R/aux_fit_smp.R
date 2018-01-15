@@ -12,13 +12,9 @@ sim <- function(extremes, dist = 'gpa', trim = c(0, 0)) { # stationary index flo
                          scaling_factor = l.atsite[,1], 
                          REG = do.call(paste0('pel', dist), args = list(c(1, w.l))), 
                          dist = dist),
-            sim.call = match.call())
+            sim.call = match.call(),
+            class = 'sim')
   
-}
-
-fit.simsample <- function(smp, sim) {
-  cl <- attr(sim, 'sim.call')
-  lapply(smp, function(x) {sim(x, dist = cl$dist, trim = as.numeric(as.character(cl$trim)[2:3]))})
 }
 
 # zero - rgev, nezavis.
@@ -26,15 +22,19 @@ fit.simsample <- function(smp, sim) {
 # two - cela matice rmvnorm, NA jsou vlozeny do matice, zbytek jako metoda one
 # three - cela matice rmvnorm, NA jsou vlozeny do matice, hodnoty jsou pres residua prevedeny na gev
 
-smp.gpa <- function(sim, length = 1, type = 'nonpar') { # testovaci nonpar sample (pro test fitovani)
+sample <- function(...) {UseMethod('sample')}
+
+sample.default <- base::sample
+
+sample.sim <- function(sim, length = 1, type = 'nonpar') { # testovaci nonpar sample (pro test fitovani)
   
-  dta <- as.data.table(sim[[1]])
+  dta <- as.data.table(sim$data)
   
   i <- 1:length
   
   if(type == 'nonpar') {
     out <- mapply(function(i) {
-      m <- dta[sample(1:nrow(dta), nrow(dta), replace = TRUE), ]
+      m <- dta[sample(1:nrow(dta), nrow(dta), replace = T), ]
       return(m)
     }, i, SIMPLIFY = FALSE)
   }
@@ -46,6 +46,16 @@ smp.gpa <- function(sim, length = 1, type = 'nonpar') { # testovaci nonpar sampl
     }, i, SIMPLIFY = FALSE)
   }
   
-  names(out) <- paste0('sample_',i)
-  out
+  structure(.Data = out,
+            names = paste0('b_sample_',i),
+            class = 'simsample')
+
+}
+
+fit <- function(...) {UseMethod('fit')}
+
+fit.simsample <- function(smp, sim) {
+  
+  cl <- attr(sim, 'sim.call')
+  lapply(smp, function(x) {sim(x, dist = cl$dist, trim = as.numeric(as.character(cl$trim)[2:3]))})
 }

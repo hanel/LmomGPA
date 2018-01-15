@@ -1,3 +1,5 @@
+######## GEV ########
+
 rgev <- function(n, para = c(xi, alpha, k)) {
   
   qgev(runif(n), para)
@@ -22,6 +24,8 @@ pgev <- function(q, para = c(xi, alpha, k)) {
   
   return(exp(-exp(-out)))
 }
+
+######## GPA ########
 
 rgpa <- function(n, para = c(xi, alpha, k)) {
   
