@@ -38,20 +38,23 @@ head(at.site.para)
 # 
 # para.reg <- regfit(temp, dist = 'gpa')
 
-dta.fit <- sim(MX)
+dta.fit <- sim(MX, dist = 'gpa', trim = c(0, 0))
 gp.gpa(dta.fit$data, dta.fit$REG, dta.fit$scaling_factor) + ggtitle(paste('Cluster', cluster.number))
 
 }
 
 s <- smp.gpa(dta.fit, length = 1000,  type = 'nonpar')
-f <- lapply(s, sim)
+f <- fit.simsample(s, dta.fit)
 
 gc.gpa(dta.fit, f)
 
 s <- smp.gpa(dta.fit, length = 1000,  type = 'zero')
-f <- lapply(s, sim)
+f <- fit.simsample(s, dta.fit)
 
 gc.gpa(dta.fit, f)
+
+
+
 
 
 

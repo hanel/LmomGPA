@@ -8,13 +8,18 @@ sim <- function(extremes, dist = 'gpa', trim = c(0, 0)) { # stationary index flo
   
   w.l <- apply(l.atsite[,-1], 2, weighted.mean, w = w)
 
-  list(data = as.data.frame(extremes), 
-       scaling_factor = l.atsite[,1], 
-       REG = do.call(paste0('pel', dist), args = list(c(1, w.l))), 
-       dist = dist)
+  structure(.Data = list(data = as.data.frame(extremes), 
+                         scaling_factor = l.atsite[,1], 
+                         REG = do.call(paste0('pel', dist), args = list(c(1, w.l))), 
+                         dist = dist),
+            sim.call = match.call())
   
 }
 
+fit.simsample <- function(smp, sim) {
+  cl <- attr(sim, 'sim.call')
+  lapply(smp, function(x) {sim(x, dist = cl$dist, trim = as.numeric(as.character(cl$trim)[2:3]))})
+}
 
 # zero - rgev, nezavis.
 # one - NA jsou nepar. nasamplovany, radky rmvnorm, hodnoty jsou po sloupcich rgev, orankovani ...
