@@ -1,3 +1,5 @@
+source('R/dist.R')
+
 sim <- function(extremes, dist = 'gpa', trim = c(0, 0)) { # stationary index flood method ;)
   
   l.atsite <- t(apply(extremes, 2, samlmu, trim = trim))
@@ -34,7 +36,7 @@ smp.gpa <- function(sim, length = 1, type = 'nonpar') { # testovaci nonpar sampl
   
   if(type == 'zero') {
     out <- mapply(function(i) {
-      m <- apply(dta, 2, function(x) {x[which(!is.na(x))] <- lmom::quagpa(runif(which(!is.na(x))), sim$REG); x})
+      m <- apply(dta, 2, function(x) {x[which(!is.na(x))] <- rgpa(which(!is.na(x)), sim$REG); x})
       return(m)
     }, i, SIMPLIFY = FALSE)
   }
