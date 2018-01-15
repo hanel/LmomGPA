@@ -34,7 +34,7 @@ sample.sim <- function(sim, length = 1, type = 'nonpar') { # testovaci nonpar sa
   i <- 1:length
   
   if(type == 'nonpar') {
-    out <- mapply(function(i) {
+    out <- mapply(function(i) { ######## to do - smp residui...
       m <- dta[sample(1:nrow(dta), nrow(dta), replace = T), ]
       return(m)
     }, i, SIMPLIFY = FALSE)

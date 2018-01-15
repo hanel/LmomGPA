@@ -144,10 +144,14 @@ gc.new <- function (n, f, ribbon.1 = c(0.05, 0.95), ribbon.2 = c(0.25, 0.75)) {
 # 
 # gp.new(n)
 
-gp.gpa <- function(dta, para, scaling.factor) {
+gp.gpa <- function(sim) {
+  
+  dta <- sim$data
+  para <- sim$REG
+  l1 <- sim$scaling_factor
   
   gpa.gp <- melt(dta, id.var = 1)
-  gpa.gp <- data.table(variable = names(dta), l1 = scaling.factor)[gpa.gp, on = c('variable')]
+  gpa.gp <- data.table(variable = names(dta), l1 = l1)[gpa.gp, on = c('variable')]
   gpa.gp <- gpa.gp[!is.na(value), p := (rank(value) - .3) / (length(value) + .4), by = variable]
   gpa.gp <- gpa.gp[, val.scaled := value/l1]
   
@@ -310,3 +314,25 @@ gg.homo <- function(lmoms) {
   
   return(homo)
 }
+
+gp.qq <- function(sim, dist = NULL) {
+  
+  if(is.null(dist)) {dist <- attr(dta.fit, 'sim.call')$dist}
+  
+  dta <- sim$data
+  para <- sim$REG
+  l1 <- sim$scaling_factor
+  
+  gpa.qq <- melt(dta, id.var = 1)
+  gpa.qq <- data.table(variable = names(dta), l1 = l1)[gpa.qq, on = c('variable')]
+  
+  ggplot(gpa.qq) +
+    geom_qq(aes(sample = value/l1, group = variable), geom = 'point', distribution = noquote(paste0('q', dist)), dparams = list(para), colour = 'grey15', fill = 'steelblue4', shape = 21) +
+    geom_abline(colour = ('red4')) +
+    coord_fixed() +
+    lims(x = c(0, max(gpa.qq$value/gpa.qq$l1, na.rm = T)),
+         y = c(0, max(gpa.qq$value/gpa.qq$l1, na.rm = T))) +
+    theme_bw()
+}
+
+
