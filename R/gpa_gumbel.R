@@ -23,12 +23,12 @@ MX <- MX[, year := NULL]
 lmom.atsite.t <- as.data.frame(t(apply(MX, 2, function(x) samlmu(x, trim = trim))))
 at.site.para <- t(apply(lmom.atsite.t, 1, pelgpa))
 
-head(lmom.atsite.t)
-head(at.site.para)
-
+# head(lmom.atsite.t)
+# head(at.site.para)
+# 
 # gg.MRD(lmom.atsite.t[,3:4]) + ggtitle(paste('Cluster', cluster.number))
 # gg.homo(lmom.atsite.t)
-
+# 
 # temp <- as.regdata(data.frame(name = names(MX),
 #                               n = apply(MX, 2, function(x) length(which(!is.na(x)))),
 #                               mean = lmom.atsite.t[,1],
@@ -43,13 +43,14 @@ gp.gpa(dta.fit$data, dta.fit$REG, dta.fit$scaling_factor) + ggtitle(paste('Clust
 
 }
 
-s <- sample(dta.fit, length = 1000,  type = 'nonpar')
+s <- sample(dta.fit, length = 500,  type = 'nonpar')
 f <- fit(s, dta.fit)
 
 gc.gpa(dta.fit, f)
 
-s <- sample(dta.fit, length = 1000,  type = 'zero')
+s <- sample(dta.fit, length = 500,  type = 'zero')
 f <- fit(s, dta.fit)
 
 gc.gpa(dta.fit, f)
+
 

@@ -29,6 +29,7 @@ sample.default <- base::sample
 sample.sim <- function(sim, length = 1, type = 'nonpar') { # testovaci nonpar sample (pro test fitovani)
   
   dta <- as.data.table(sim$data)
+  para <- sim$REG
   
   i <- 1:length
   
@@ -41,7 +42,7 @@ sample.sim <- function(sim, length = 1, type = 'nonpar') { # testovaci nonpar sa
   
   if(type == 'zero') {
     out <- mapply(function(i) {
-      m <- apply(dta, 2, function(x) {x[which(!is.na(x))] <- rgpa(which(!is.na(x)), sim$REG); x})
+      m <- apply(dta, 2, function(x) {x[which(!is.na(x))] <- rgpa(which(!is.na(x)), para); x})
       return(m)
     }, i, SIMPLIFY = FALSE)
   }
@@ -59,3 +60,4 @@ fit.simsample <- function(smp, sim) {
   cl <- attr(sim, 'sim.call')
   lapply(smp, function(x) {sim(x, dist = cl$dist, trim = as.numeric(as.character(cl$trim)[2:3]))})
 }
+
