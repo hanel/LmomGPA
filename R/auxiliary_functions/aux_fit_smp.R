@@ -1,5 +1,3 @@
-source('R/dist.R')
-
 sim <- function(extremes, dist = 'gpa', trim = c(0, 0)) { # stationary index flood method ;)
   
   l.atsite <- t(apply(extremes, 2, samlmu, trim = trim))

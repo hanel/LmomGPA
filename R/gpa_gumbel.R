@@ -2,11 +2,10 @@ library(data.table)
 library(ggplot2)
 library(lmomRFA)
 
-source('R/aux_functions.R')
-source('R/aux_fit_smp.R')
+source('R/auxiliary_functions/imports.R')
 
 trim <- c(0,0)
-cluster.number <- 2
+cluster.number <- 3
 
 {
 
@@ -26,8 +25,7 @@ at.site.para <- t(apply(lmom.atsite.t, 1, pelgpa))
 # head(lmom.atsite.t)
 # head(at.site.para)
 # 
-# gg.MRD(lmom.atsite.t[,3:4]) + ggtitle(paste('Cluster', cluster.number))
-# gg.homo(lmom.atsite.t)
+# ratiodiagram(lmom.atsite.t[,3:4])
 # 
 # temp <- as.regdata(data.frame(name = names(MX),
 #                               n = apply(MX, 2, function(x) length(which(!is.na(x)))),
@@ -39,31 +37,21 @@ at.site.para <- t(apply(lmom.atsite.t, 1, pelgpa))
 # para.reg <- regfit(temp, dist = 'gpa')
 
 dta.fit <- sim(MX, dist = 'gpa', trim = c(0, 0))
-gp.gpa(dta.fit) + ggtitle(paste('Cluster', cluster.number))
-gp.qq(dta.fit) + ggtitle(paste('Cluster', cluster.number))
+gumbelplot(dta.fit)
+qq(dta.fit)
 
 }
 
 s <- sample(dta.fit, length = 500,  type = 'nonpar')
 f <- fit(s, dta.fit)
 
-gc.gpa(dta.fit, f)
+growthcurve(dta.fit, f)
 
 s <- sample(dta.fit, length = 500,  type = 'zero')
 f <- fit(s, dta.fit)
 
-gc.gpa(dta.fit, f)
+growthcurve(dta.fit, f)
 
 
 res <- matrix(pgpa(dta.fit$data, para = dta.fit$REG), ncol = ncol(dta.fit$data)) ########## coles - najit residua pro GPA
 
-# cv <- cov(res, use = 'pairwise.complete.obs')
-# co <- cov2cor(cv)
-# co[] <- mean(co[upper.tri(co)], na.rm = TRUE)
-# diag(co) <- 1
-# sdMat <- diag(sqrt(diag(cv)))
-# sigma <- sdMat %*% co %*% t(sdMat)
-# 
-# nnn <- data.table(mvtnorm::rmvnorm(nrow(dta.fit$data), sigma = sigma, method = 'chol'))
-# 
-# 1 - exp(-pmax(nnn, 0))

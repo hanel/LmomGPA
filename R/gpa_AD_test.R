@@ -2,8 +2,7 @@ library(data.table)
 library(ggplot2)
 library(lmom)
 
-source('R/aux_functions.R')
-source('R/aux_fit_smp.R')
+source('R/auxiliary_functions/imports.R')
 
 trim <- c(0,0)
 smp <- 1000
@@ -14,11 +13,11 @@ MX <- as.data.table(dcast(mx[, list(year, SP_ID, dV)], year ~ SP_ID, value.var =
 MX <- MX[, year := NULL]
 
 # lmom.atsite.t <- as.data.frame(t(apply(MX, 2, function(x) samlmu(x, trim = trim))))
-# gg.MRD(lmom.atsite.t[,3:4]) + ggtitle('via lmom package')
+# ratiodiagram(lmom.atsite.t[,3:4])
 # at.site.pars <- data.table(SP_ID = names(MX), t(apply(lmom.atsite.t, 1, function(x) {pelgpa(x)})))
 
-lmom.atsite.manual <- as.data.frame(t(apply(MX, 2, function(x) moje.lm(x)))) # at site l-momenty (prepsanou fci)
-gg.MRD(lmom.atsite.manual[,3:4]) + ggtitle('via moje l-momenty')
+lmom.atsite.manual <- as.data.frame(t(apply(MX, 2, function(x) lmanual(x)))) # at site l-momenty (prepsanou fci)
+ratiodiagram(lmom.atsite.manual[,3:4])
 at.site.pars.manual <- data.table(SP_ID = names(MX), t(apply(lmom.atsite.manual, 1, function(x) {gpa.para(x)}))) # atsite gpa parametry (prepsanou fci)
 
 # identical(summary(at.site.pars),summary(at.site.pars.manual))
@@ -33,7 +32,7 @@ ad.mx <- para.mx[, .(base_ad = AD.test.multidist(val = dV, # vypocet AD statisti
 
 AD.SMP <- lapply(1:smp, function(i) { 
   ad.dV <- para.mx[, .(dV = quagpa(runif(length(dV)), c(unique(xi), unique(alpha), unique(k)))), by = SP_ID] # samplovani GPA hodnot
-  ad.para <- dcast(ad.dV[, .(val = gpa.para(moje.lm(dV)), para = c('xi', 'alpha', 'k')), by = SP_ID], SP_ID ~ para, value.var = 'val') # paramety samplu
+  ad.para <- dcast(ad.dV[, .(val = gpa.para(lmanual(dV)), para = c('xi', 'alpha', 'k')), by = SP_ID], SP_ID ~ para, value.var = 'val') # paramety samplu
   ad.res <- merge(ad.dV, ad.para)
   ad.res[, .(smp_ad = AD.test.multidist(val = dV, location = unique(xi), scale = unique(alpha), shape = unique(k), dist = 'gpa')), by = SP_ID] # AD stat. pro samply
 })
@@ -49,7 +48,7 @@ length(which(res$eval))
 summary(res$p)
 summary(res$eval)
 
-gg.MRD(lmom.atsite.manual[which(!res$eval),3:4]) + ggtitle('ty co neprosly testem')
+ratiodiagram(lmom.atsite.manual[which(!res$eval),3:4]) + ggtitle('ty co neprosly testem')
 
 # saveRDS(res, 'Active Docs/filip_nim/data/AD.rds')
 #############################################################
