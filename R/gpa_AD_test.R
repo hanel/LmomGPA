@@ -12,17 +12,15 @@ mx <- data.table(readRDS('data/DV.rds'))
 MX <- as.data.table(dcast(mx[, list(year, SP_ID, dV)], year ~ SP_ID, value.var = 'dV'))
 MX <- MX[, year := NULL]
 
-# lmom.atsite.t <- as.data.frame(t(apply(MX, 2, function(x) samlmu(x, trim = trim))))
-# ratiodiagram(lmom.atsite.t[,3:4])
-# at.site.pars <- data.table(SP_ID = names(MX), t(apply(lmom.atsite.t, 1, function(x) {pelgpa(x)})))
+lmom.atsite <- as.data.frame(t(apply(MX, 2, function(x) samlmu(x, trim = trim))))
+ratiodiagram(lmom.atsite[,3:4])
+at.site.pars <- data.table(SP_ID = names(MX), t(apply(lmom.atsite, 1, function(x) {pelgpa(x)})))
 
-lmom.atsite.manual <- as.data.frame(t(apply(MX, 2, function(x) lmanual(x)))) # at site l-momenty (prepsanou fci)
-ratiodiagram(lmom.atsite.manual[,3:4])
-at.site.pars.manual <- data.table(SP_ID = names(MX), t(apply(lmom.atsite.manual, 1, function(x) {gpa.para(x)}))) # atsite gpa parametry (prepsanou fci)
+# lmom.atsite <- as.data.frame(t(apply(MX, 2, function(x) lmanual(x)))) # at site l-momenty (prepsanou fci)
+# ratiodiagram(lmom.atsite[,3:4])
+# at.site.pars <- data.table(SP_ID = names(MX), t(apply(lmom.atsite, 1, function(x) {gpa.para(x)}))) # atsite gpa parametry (prepsanou fci)
 
-# identical(summary(at.site.pars),summary(at.site.pars.manual))
-
-para.mx <- merge(mx[, .(SP_ID, dV)], at.site.pars.manual)
+para.mx <- merge(mx[, .(SP_ID, dV)], at.site.pars)
 ad.mx <- para.mx[, .(base_ad = AD.test.multidist(val = dV, # vypocet AD statistiky pro deficitni objemy
                                                  location = unique(xi), 
                                                  scale = unique(alpha), 
@@ -31,8 +29,8 @@ ad.mx <- para.mx[, .(base_ad = AD.test.multidist(val = dV, # vypocet AD statisti
                  by = SP_ID]
 
 AD.SMP <- lapply(1:smp, function(i) { 
-  ad.dV <- para.mx[, .(dV = quagpa(runif(length(dV)), c(unique(xi), unique(alpha), unique(k)))), by = SP_ID] # samplovani GPA hodnot
-  ad.para <- dcast(ad.dV[, .(val = gpa.para(lmanual(dV)), para = c('xi', 'alpha', 'k')), by = SP_ID], SP_ID ~ para, value.var = 'val') # paramety samplu
+  ad.dV <- para.mx[, .(dV = rgpa(length(dV), c(unique(xi), unique(alpha), unique(k)))), by = SP_ID] # samplovani GPA hodnot
+  ad.para <- dcast(ad.dV[, .(val = pelgpa(samlmu(dV)), para = c('xi', 'alpha', 'k')), by = SP_ID], SP_ID ~ para, value.var = 'val') # paramety samplu
   ad.res <- merge(ad.dV, ad.para)
   ad.res[, .(smp_ad = AD.test.multidist(val = dV, location = unique(xi), scale = unique(alpha), shape = unique(k), dist = 'gpa')), by = SP_ID] # AD stat. pro samply
 })
@@ -48,7 +46,7 @@ length(which(res$eval))
 summary(res$p)
 summary(res$eval)
 
-ratiodiagram(lmom.atsite.manual[which(!res$eval),3:4]) + ggtitle('ty co neprosly testem')
+ratiodiagram(lmom.atsite[which(!res$eval),3:4]) + ggtitle('ty co neprosly testem')
 
 # saveRDS(res, 'Active Docs/filip_nim/data/AD.rds')
 #############################################################

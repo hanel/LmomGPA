@@ -45,13 +45,24 @@ qq(dta.fit)
 s <- sample(dta.fit, length = 500,  type = 'nonpar')
 f <- fit(s, dta.fit)
 
-growthcurve(dta.fit, f)
+growthcurve(dta.fit, f, method = 'ggplot', rp = F)
 
 s <- sample(dta.fit, length = 500,  type = 'zero')
 f <- fit(s, dta.fit)
 
-growthcurve(dta.fit, f)
+growthcurve(dta.fit, f, method = 'base', return.period = c(10, 25, 100, 500))
+
+resid.sim <- function(model_object){}
+
+model_object <- dta.fit
+
+dta <- model_object$data
+para <- model_object$REG
+sf <- model_object$scaling_factor
+
+resi <- suppressWarnings(melt(dta))
+resi <- data.table(variable = names(dta), sf = sf, t(para))[resi, on = c('variable')]
+resi <- resi[, resi := 1/k*log(1 + k*((value/sf)/alpha)), by = 'variable']
 
 
-res <- matrix(pgpa(dta.fit$data, para = dta.fit$REG), ncol = ncol(dta.fit$data)) ########## coles - najit residua pro GPA
-
+View(resi)

@@ -29,7 +29,7 @@ gumbelplot <- function(model_object, dist = NULL, method = 'base') {
     plot(NULL,
          xlim = c(min(regional$x), max(regional$x)*1.15),
          ylim = c(min(res.gp$scaled.value, na.rm = T), max(res.gp$scaled.value, na.rm = T)),
-         bty = 'n',
+         bty = 'l',
          xlab = expression(-log(-log(p))),
          ylab = 'Value',
          main = 'Gumbel plot')
@@ -56,16 +56,15 @@ gumbelplot <- function(model_object, dist = NULL, method = 'base') {
   
   if(method %in% c('ggplot', 'plotly')) {
     
-    if(method == 'ggplot') {
-      
-      gp <- ggplot2::ggplot(res.gp) +
-        ggplot2::geom_line(ggplot2::aes(x = gumbel.variate, y = scaled.value, group = variable), colour = 'steelblue4', alpha = .5) +
-        ggplot2::geom_point(ggplot2::aes(x = gumbel.variate, y = scaled.value, group = variable), colour = 'grey15', fill = 'steelblue4', alpha = .5, shape = 21) +
-        ggplot2::geom_line(data = regional, ggplot2::aes(x = x, y = y), col = 'red4', lwd = .75) + 
-        ggplot2::theme_bw() +
-        ggplot2::labs(x = '-log(-log(p))', y = 'Value', title = 'Gumbel plot') +
-        ggplot2::theme(plot.title = ggplot2::element_text(hjust = .5))
-    }
+    gp <- ggplot2::ggplot(res.gp) +
+      ggplot2::geom_line(ggplot2::aes(x = gumbel.variate, y = scaled.value, group = variable), colour = 'steelblue4', alpha = .5) +
+      ggplot2::geom_point(ggplot2::aes(x = gumbel.variate, y = scaled.value, group = variable), colour = 'grey15', fill = 'steelblue4', alpha = .5, shape = 21) +
+      ggplot2::geom_line(data = regional, ggplot2::aes(x = x, y = y), col = 'red4', lwd = .75) + 
+      ggplot2::theme_bw() +
+      ggplot2::labs(x = '-log(-log(p))', y = 'Value', title = 'Gumbel plot') +
+      ggplot2::theme(plot.title = ggplot2::element_text(hjust = .5),
+                     panel.border = element_blank(),
+                     axis.line = element_line(colour = 'black'))
     
     if(method == 'plotly') {
       
@@ -76,7 +75,7 @@ gumbelplot <- function(model_object, dist = NULL, method = 'base') {
   }
 }
 
-growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, method = 'base', ribbon.1 = c(0.05, 0.95), ribbon.2 = c(0.25, 0.75)) {
+growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, method = 'base', ribbon.1 = c(0.05, 0.95), ribbon.2 = c(0.25, 0.75), rp = T, return.period = c(5, 10, 20, 50, 100)) {
   
   # res (init res will need to be rewritten for nim)
   
@@ -85,7 +84,7 @@ growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, method = '
   
   if(is.null(dist)) {dist <- attr(model_object, 'sim.call')$dist}
   
-  qs <- seq(.01, .995, .001)
+  qs <- seq(.01, 1 - 1/max(return.period)*.5, 1/max(return.period))
   qaux <- data.table(rbindlist(lapply(fitted_bootstrap, function(x) {data.frame(q = do.call(paste0('q',dist), list(qs, x$REG)))}),
                                idcol = 'sample'), 
                      probs = seq_along(qs))
@@ -104,7 +103,7 @@ growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, method = '
          xlim = c(min(res.gc$gumbel.variate), max(res.gc$gumbel.variate)),
          ylim = c(min(res.gc[,c('rib_1_min', 'rib_2_min', 'rib_2_max', 'rib_1_max')]), 
                   max(res.gc[,c('rib_1_min', 'rib_2_min', 'rib_2_max', 'rib_1_max')])),
-         bty = 'n',
+         bty = 'l',
          xlab = expression(-log(-log(p))),
          ylab = 'Value',
          main = 'Growth curve')
@@ -124,19 +123,46 @@ growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, method = '
           type = 'l',
           col = 'red4',
           lwd = .75)
+    
+    axis.lim <- par('usr')
+    
+    if(rp) {
+      
+      rp.lab <- return.period
+      rp.x <- -log(-log(1 - 1/rp.lab))
+      rp.y <- axis.lim[3] + (axis.lim[4] - axis.lim[3])*.05
+      
+      axis(side = 3, at = rp.x, pos = rp.y, labels = rp.lab)
+      
+      text(mean(rp.x[rev(rank(rp.lab))[1:2]]), rp.y + par('cxy')[2], 'Return period', adj = c(.75, -2.75))
+    }
   }
     
   if(method %in% c('ggplot', 'plotly')) {
     
-    if(method == 'ggplot') {
+    gc <- ggplot2::ggplot(res.gc) +
+      ggplot2::geom_ribbon(ggplot2::aes(x = gumbel.variate, ymin = rib_1_min, ymax = rib_1_max), fill = 'steelblue4', alpha = .4) +
+      ggplot2::geom_ribbon(ggplot2::aes(x = gumbel.variate, ymin = rib_2_min, ymax = rib_2_max), fill = 'steelblue4', alpha = .8) +
+      ggplot2::geom_line(ggplot2::aes(x = gumbel.variate, y = scaled.value), col = 'red4', lwd = .75) + 
+      ggplot2::theme_bw() +
+      ggplot2::labs(x = '-log(-log(p))', y = 'Value', title = 'Growth curve') +
+      ggplot2::theme(plot.title = ggplot2::element_text(hjust = .5),
+                     panel.border = element_blank(),
+                     axis.line = element_line(colour = 'black'))
+    if(rp) {
       
-      gc <- ggplot2::ggplot(res.gc) +
-        ggplot2::geom_ribbon(ggplot2::aes(x = gumbel.variate, ymin = rib_1_min, ymax = rib_1_max), fill = 'steelblue4', alpha = .4) +
-        ggplot2::geom_ribbon(ggplot2::aes(x = gumbel.variate, ymin = rib_2_min, ymax = rib_2_max), fill = 'steelblue4', alpha = .8) +
-        ggplot2::geom_line(ggplot2::aes(x = gumbel.variate, y = scaled.value), col = 'red4', lwd = .75) + 
-        ggplot2::theme_bw() +
-        ggplot2::labs(x = '-log(-log(p))', y = 'Value', title = 'Growth curve') +
-        ggplot2::theme(plot.title = ggplot2::element_text(hjust = .5))
+      axis.lim <- c(-log(-log(range(qs))), range(qaux$q))
+      
+      rp.lab <- return.period
+      rp.x <- -log(-log(1 - 1/rp.lab))
+      rp.y <- axis.lim[3] + (axis.lim[4] - axis.lim[3])*.05
+      
+      rp.dta <- data.table(rp.x, rp.y, rp.lab)
+      
+      gc <- gc + ggplot2::geom_point(data = rp.dta, ggplot2::aes(x = rp.x, y = rp.y), shape = '|', size = 3) +
+        ggplot2::geom_line(data = rp.dta, ggplot2::aes(x = rp.x, y = rp.y)) +
+        ggplot2::geom_text(data = rp.dta, ggplot2::aes(x = rp.x, y = rp.y*2, label = rp.lab)) +
+        ggplot2::geom_text(data = rp.dta, ggplot2::aes(x = mean(rp.x[rev(rank(rp.lab))[1:2]]), y = rp.y[1]*3.5), label = 'Return period', fontface = 1)
     }
     
     if(method == 'plotly') {
@@ -175,7 +201,7 @@ qq <- function(model_object, dist = NULL, method = 'base') {
          pch = 21,
          col = 'grey15', 
          bg = '#36648b90',
-         bty = 'n',
+         bty = 'l',
          xlab = 'theoretical',
          ylab = 'sample',
          main = 'qqplot')
@@ -197,16 +223,16 @@ qq <- function(model_object, dist = NULL, method = 'base') {
   
   if(method %in% c('ggplot', 'plotly')) {
     
-    if(method == 'ggplot') {
-      
-      qq <- ggplot(res.qq) +
-        geom_qq(aes(sample = scaled.value, group = variable), geom = 'point', distribution = noquote(paste0('q', dist)), dparams = list(para), colour = 'grey15', fill = 'steelblue4', shape = 21) +
-        geom_abline(colour = ('red4')) +
-        coord_fixed() +
-        lims(x = c(0, max(gpa.qq$value/gpa.qq$l1, na.rm = T)),
-             y = c(0, max(gpa.qq$value/gpa.qq$l1, na.rm = T))) +
-        theme_bw()
-    }
+    qq <- ggplot2::ggplot(res.qq) +
+      ggplot2::geom_qq(ggplot2::aes(sample = scaled.value, group = variable), geom = 'point', distribution = noquote(paste0('q', dist)), dparams = list(para), colour = 'grey15', fill = 'steelblue4', shape = 21) +
+      ggplot2::geom_abline(colour = ('red4')) +
+      ggplot2::coord_fixed() +
+      ggplot2::lims(x = c(0, max(gpa.qq$value/gpa.qq$l1, na.rm = T)),
+                    y = c(0, max(gpa.qq$value/gpa.qq$l1, na.rm = T))) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(plot.title = ggplot2::element_text(hjust = .5),
+                     panel.border = element_blank(),
+                     axis.line = element_line(colour = 'black'))
     
     if(method == 'plotly') {
       

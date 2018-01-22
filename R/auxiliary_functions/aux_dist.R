@@ -1,11 +1,11 @@
 ######## GEV ########
 
-rgev <- function(n, para = c(xi, alpha, k)) {
+rgev <- function(n, para = c(xi = 0, alpha = 1, k = 0)) {
   
   qgev(runif(n), para)
 }
 
-qgev <- function(p, para = c(xi, alpha, k)) {
+qgev <- function(p, para = c(xi = 0, alpha = 1, k = 0)) {
   
   if (para[3] == 0) {
     para[1] - para[2]*log(-log(p))
@@ -14,7 +14,7 @@ qgev <- function(p, para = c(xi, alpha, k)) {
   }
 }
 
-pgev <- function(q, para = c(xi, alpha, k)) {
+pgev <- function(q, para = c(xi = 0, alpha = 1, k = 0)) {
   
   if (para[3] == 0) {
     out <- (q - para[1])/para[2]
@@ -27,7 +27,7 @@ pgev <- function(q, para = c(xi, alpha, k)) {
 
 ######## GPA ########
 
-rgpa <- function(n, para = c(xi, alpha, k)) {
+rgpa <- function(n, para = c(xi = 0, alpha = 1, k = 0)) {
   
   qgpa(runif(n), para)
 }
@@ -41,7 +41,7 @@ qgpa <- function(p, para = c(xi = 0, alpha = 1, k = 0)) {
   }
 }
 
-pgpa <- function(q, para = c(xi, alpha, k)) {
+pgpa <- function(q, para = c(xi = 0, alpha = 1, k = 0)) {
   
   if (para[3] == 0) {
     out <- (q - para[1])/para[2]
