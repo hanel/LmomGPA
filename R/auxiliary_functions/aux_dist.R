@@ -85,5 +85,16 @@ gpa.para <- function(l) {
   alpha <- (1 + k)*(2 + k)*l[2]
   xi <- l[1] - (2 + k)*l[2]
   
-  setNames(c(xi, alpha, k), c('xi', 'alpha', 'k'))
+  unlist(setNames(c(xi, alpha, k), c('xi', 'alpha', 'k')))
+}
+
+gev.para <- function(l) {
+  
+  c <- 2/(3 + l[3]) - log(2)/log(3)
+  
+  k <- 7.859*c + 2.9554*c^2
+  alpha <- (l[2]*k)/((1 - 2^(-k))*gamma(1 + k))
+  xi <- l[1] - alpha*(1 - gamma(1 + k))/k
+  
+  unlist(setNames(c(xi, alpha, k), c('xi', 'alpha', 'k')))
 }

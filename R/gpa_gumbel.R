@@ -19,24 +19,10 @@ mx.trim[, p :=  (rank(dV)-.3)/(length(dV) + .4), by = SP_ID]
 MX <- data.table(dcast(mx.trim[, list(year, SP_ID, dV)], year ~ SP_ID, value.var = 'dV'))
 MX <- MX[, year := NULL]
 
-lmom.atsite.t <- as.data.frame(t(apply(MX, 2, function(x) samlmu(x, trim = trim))))
-at.site.para <- t(apply(lmom.atsite.t, 1, pelgpa))
+lmom.atsite <- as.data.frame(t(apply(MX, 2, function(x) samlmu(x, trim = trim))))
+at.site.para <- t(apply(lmom.atsite, 1, pelgpa))
 
-# head(lmom.atsite.t)
-# head(at.site.para)
-# 
-# ratiodiagram(lmom.atsite.t[,3:4])
-# 
-# temp <- as.regdata(data.frame(name = names(MX),
-#                               n = apply(MX, 2, function(x) length(which(!is.na(x)))),
-#                               mean = lmom.atsite.t[,1],
-#                               t = lmom.atsite.t[,2]/lmom.atsite.t[,1],
-#                               t_3 = lmom.atsite.t[,3],
-#                               t_4 = lmom.atsite.t[,4]))
-# 
-# para.reg <- regfit(temp, dist = 'gpa')
-
-dta.fit <- sim(MX, dist = 'gpa', trim = c(0, 0))
+dta.fit <- sim(MX, dist = 'gpa')
 gumbelplot(dta.fit)
 qq(dta.fit)
 
@@ -52,17 +38,26 @@ f <- fit(s, dta.fit)
 
 growthcurve(dta.fit, f, method = 'base', return.period = c(10, 25, 100, 500))
 
-resid.sim <- function(model_object){}
+resid.sim <- function(model_object){
+  
+  dta <- model_object$data
+  para <- model_object$REG
+  sf <- model_object$scaling_factor
+  
+  resi <- suppressMessages(melt(dta))
+  resi <- data.table(variable = names(dta), sf = sf, t(para))[resi, on = c('variable')]
+  resi <- resi[, resi := 1/k*log(1 + k*((value/sf)/alpha)), by = 'variable'] # coles - sigma = alpha, xi = kappa #######
 
-model_object <- dta.fit
+  print(resi[, c('variable', 'resi')])
+}
 
-dta <- model_object$data
-para <- model_object$REG
-sf <- model_object$scaling_factor
+precip <- sim(nim::precip_max[,-1], dist = 'gev')
 
-resi <- suppressWarnings(melt(dta))
-resi <- data.table(variable = names(dta), sf = sf, t(para))[resi, on = c('variable')]
-resi <- resi[, resi := 1/k*log(1 + k*((value/sf)/alpha)), by = 'variable']
+resid.sim(precip)
+resid.sim(dta.fit)
 
+matplot(as.matrix(precip$data), type = 'h')
+matplot(as.matrix(dta.fit$data), type = 'h')
 
-View(resi)
+precip$scaling_factor
+dta.fit$scaling_factor

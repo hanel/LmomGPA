@@ -24,10 +24,10 @@ sample <- function(...) {UseMethod('sample')}
 
 sample.default <- base::sample
 
-sample.sim <- function(sim, length = 1, type = 'nonpar') { # testovaci nonpar sample (pro test fitovani)
+sample.sim <- function(model_object, length = 1, type = 'nonpar') { # testovaci nonpar sample (pro test fitovani)
   
-  dta <- as.data.table(sim$data)
-  para <- sim$REG
+  dta <- as.data.table(model_object$data)
+  para <- model_object$REG
   
   i <- 1:length
   
@@ -53,9 +53,18 @@ sample.sim <- function(sim, length = 1, type = 'nonpar') { # testovaci nonpar sa
 
 fit <- function(...) {UseMethod('fit')}
 
-fit.simsample <- function(smp, sim) {
+fit.simsample <- function(smp, model_object) {
   
-  cl <- attr(sim, 'sim.call')
-  lapply(smp, function(x) {sim(x, dist = cl$dist, trim = as.numeric(as.character(cl$trim)[2:3]))})
+  cl <- attr(model_object, 'sim.call')
+  
+  if(all(!is.na(as.numeric(as.character(cl$trim)[2:3])))) {
+    
+    trim <- as.numeric(as.character(cl$trim)[2:3])
+  } else {
+    
+    trim <- as.numeric(as.character(formals(sim)$trim)[2:3])
+  }
+  
+  lapply(smp, function(x) {sim(x, dist = cl$dist, trim = trim)})
 }
 
