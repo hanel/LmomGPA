@@ -93,7 +93,34 @@ n.min <- function(x, n = 2){
   }
 }
 
-
 # pelgpa(samlmu(x))
 # gpa.para(moje.lm(x))
 
+################################### resid
+
+resid.sim <- function(model_object){
+  
+  dta <- model_object$data
+  para <- model_object$REG
+  sf <- model_object$scaling_factor
+  
+  resi <- suppressMessages(melt(dta))
+  resi <- data.table(variable = names(dta), sf = sf, t(para))[resi, on = c('variable')]
+  resi <- resi[, `:=`(resi = 1/k*log(1 + k*((value/sf)/alpha)),
+                      aux = seq_len(.N)), by = 'variable'] # coles - sigma = alpha, xi = kappa #######
+  
+  dcast(resi, aux ~ variable, value.var = 'resi')[,-1]
+}
+
+backtodata <- function(res, model_object){
+  
+  para <- model_object$REG
+  sf <- model_object$scaling_factor
+  
+  res <- suppressWarnings(melt(res))
+  res <- data.table(variable = names(model_object$data), sf = sf, t(para))[res, on = c('variable')]
+  dta <- res[, `:=`(val = ((alpha*(exp(value*k) - 1))/k)*sf,
+                    aux = seq_len(.N)), by = 'variable']
+  
+  dcast(dta, aux ~ variable, value.var = 'val')[,-1]
+}

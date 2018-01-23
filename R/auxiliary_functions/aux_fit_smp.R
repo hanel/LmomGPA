@@ -32,8 +32,10 @@ sample.sim <- function(model_object, length = 1, type = 'nonpar') { # testovaci 
   i <- 1:length
   
   if(type == 'nonpar') {
-    out <- mapply(function(i) { ######## to do - smp residui...
-      m <- dta[sample(1:nrow(dta), nrow(dta), replace = T), ]
+    out <- mapply(function(i) {
+      m <- resid.sim(model_object)
+      m <- m[sample(1:dim(m)[1], dim(m)[1], replace = T),]
+      m <- backtodata(m, model_object)
       return(m)
     }, i, SIMPLIFY = FALSE)
   }
