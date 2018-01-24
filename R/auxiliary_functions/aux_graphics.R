@@ -1,4 +1,4 @@
-gumbelplot <- function(model_object, dist = NULL, method = 'base') {
+gumbelplot <- function(model_object, dist = NULL, method = if ('ggplot2' %in% installed.packages()[,'Package']) {'ggplot'} else {'base'}) {
   
   # res (init res will need to be rewritten for nim)
   
@@ -75,7 +75,7 @@ gumbelplot <- function(model_object, dist = NULL, method = 'base') {
   }
 }
 
-growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, method = 'base', ribbon.1 = c(0.05, 0.95), ribbon.2 = c(0.25, 0.75), rp = T, return.period = c(5, 10, 20, 50, 100)) {
+growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, ribbon.1 = c(0.05, 0.95), ribbon.2 = c(0.25, 0.75), rp = T, return.period = c(5, 10, 20, 50, 100), method = if ('ggplot2' %in% installed.packages()[,'Package']) {'ggplot'} else {'base'}) {
   
   # res (init res will need to be rewritten for nim)
   
@@ -174,7 +174,7 @@ growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, method = '
   }
 }
 
-qq <- function(model_object, dist = NULL, method = 'base') {
+qq <- function(model_object, dist = NULL, method = if ('ggplot2' %in% installed.packages()[,'Package']) {'ggplot'} else {'base'}) {
   
   dta <- as.data.table(model_object$data)
   para <- model_object$REG
@@ -227,8 +227,8 @@ qq <- function(model_object, dist = NULL, method = 'base') {
       ggplot2::geom_qq(ggplot2::aes(sample = scaled.value, group = variable), geom = 'point', distribution = noquote(paste0('q', dist)), dparams = list(para), colour = 'grey15', fill = 'steelblue4', shape = 21) +
       ggplot2::geom_abline(colour = ('red4')) +
       ggplot2::coord_fixed() +
-      ggplot2::lims(x = c(0, max(gpa.qq$value/gpa.qq$l1, na.rm = T)),
-                    y = c(0, max(gpa.qq$value/gpa.qq$l1, na.rm = T))) +
+      ggplot2::lims(x = c(0, max(res.qq$value/res.qq$sf, na.rm = T)),
+                    y = c(0, max(res.qq$value/res.qq$sf, na.rm = T))) +
       ggplot2::theme_bw() +
       ggplot2::theme(plot.title = ggplot2::element_text(hjust = .5),
                      panel.border = element_blank(),

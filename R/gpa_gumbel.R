@@ -24,16 +24,16 @@ at.site.para <- t(apply(lmom.atsite, 1, pelgpa))
 
 }
 
-dta.fit <- sim(MX[,1], dist = 'gpa')
+dta.fit <- sim(MX[,2], dist = 'gpa')
 gumbelplot(dta.fit)
 qq(dta.fit)
 
-
+geom_qq()
 
 s <- sample(dta.fit, length = 500,  type = 'nonpar')
 f <- fit(s, dta.fit)
 
-growthcurve(dta.fit, f, method = 'base', return.period = c(10, 25, 100, 500))
+growthcurve(dta.fit, f, return.period = c(10, 25, 100, 500))
 
 s <- sample(dta.fit, length = 500,  type = 'zero')
 f <- fit(s, dta.fit)
@@ -42,8 +42,6 @@ growthcurve(dta.fit, f, method = 'ggplot', rp = F)
 
 
 res <- resid.sim(dta.fit)
+res
 xxx <- backtodata(res, dta.fit)
-
-yyy <- sim(xxx, dist = 'gpa')
-gumbelplot(yyy)
-gumbelplot(dta.fit)
+xxx
