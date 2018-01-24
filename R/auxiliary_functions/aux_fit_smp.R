@@ -1,18 +1,29 @@
 sim <- function(extremes, dist = 'gpa', trim = c(0, 0)) { # stationary index flood method ;)
   
   l.atsite <- t(apply(extremes, 2, samlmu, trim = trim))
-  l.atsite[,2] <- l.atsite[,2]/l.atsite[,1]
-  w <- apply(extremes, 2, function(x) length(x[!is.na(x)]))
   
-  w.l <- apply(l.atsite[,-1], 2, weighted.mean, w = w)
-
-  structure(.Data = list(data = as.data.frame(extremes), 
-                         scaling_factor = l.atsite[,1], 
-                         REG = do.call(paste0('pel', dist), args = list(c(1, w.l))), 
-                         dist = dist),
-            sim.call = match.call(),
-            class = 'sim')
-  
+  if(dim(l.atsite)[1] > 2)  {
+    
+    l.atsite[,2] <- l.atsite[,2]/l.atsite[,1]
+    
+    w <- apply(extremes, 2, function(x) length(x[!is.na(x)]))
+    w.l <- apply(l.atsite[,-1], 2, weighted.mean, w = w)
+    
+    structure(.Data = list(data = as.data.frame(extremes), 
+                           scaling_factor = l.atsite[,1], 
+                           REG = do.call(paste0('pel', dist), args = list(c(1, w.l))), 
+                           dist = dist),
+              sim.call = match.call(),
+              class = 'sim')
+  } else {
+    
+    structure(.Data = list(data = as.data.frame(extremes), 
+                           scaling_factor = 1, 
+                           REG = do.call(paste0('pel', dist), args = list(l.atsite)), 
+                           dist = dist),
+              sim.call = match.call(),
+              class = 'sim')
+  }
 }
 
 # zero - rgev, nezavis.

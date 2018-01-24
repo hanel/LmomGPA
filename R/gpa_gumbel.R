@@ -4,7 +4,7 @@ library(lmomRFA)
 
 source('R/auxiliary_functions/imports.R')
 
-trim <- c(1,1)
+trim <- c(1,2)
 cluster.number <- 1
 
 {
@@ -24,7 +24,7 @@ at.site.para <- t(apply(lmom.atsite, 1, pelgpa))
 
 }
 
-dta.fit <- sim(MX, dist = 'gpa')
+dta.fit <- sim(MX[,1], dist = 'gpa')
 gumbelplot(dta.fit)
 qq(dta.fit)
 
@@ -42,5 +42,8 @@ growthcurve(dta.fit, f, method = 'ggplot', rp = F)
 
 
 res <- resid.sim(dta.fit)
-xxx <- backtodata(r, dta.fit)
+xxx <- backtodata(res, dta.fit)
 
+yyy <- sim(xxx, dist = 'gpa')
+gumbelplot(yyy)
+gumbelplot(dta.fit)
