@@ -35,7 +35,7 @@ sample <- function(...) {UseMethod('sample')}
 
 sample.default <- base::sample
 
-sample.sim <- function(model_object, length = 1, type = 'nonpar') { # testovaci nonpar sample (pro test fitovani)
+sample.sim <- function(model_object, length = 1, type = 'nonpar', na = T) { # testovaci nonpar sample (pro test fitovani)
   
   dta <- as.data.table(model_object$data)
   para <- model_object$REG
@@ -43,7 +43,9 @@ sample.sim <- function(model_object, length = 1, type = 'nonpar') { # testovaci 
   i <- 1:length
   
   if(type == 'nonpar') {
+    
     out <- mapply(function(i) {
+      
       m <- resid.sim(model_object)
       m <- m[sample(1:dim(m)[1], dim(m)[1], replace = T),]
       m <- backtodata(m, model_object)
@@ -52,11 +54,38 @@ sample.sim <- function(model_object, length = 1, type = 'nonpar') { # testovaci 
   }
   
   if(type == 'zero') {
+    
     out <- mapply(function(i) {
+      
       m <- apply(dta, 2, function(x) {x[which(!is.na(x))] <- rgpa(which(!is.na(x)), para); x})
       return(m)
     }, i, SIMPLIFY = FALSE)
   }
+  
+  if(type == 'para_cor') {
+    
+    out <- mapply(function(i) {
+      cvr <- cov(resid.sim(model_object), use = 'pairwise.complete.obs')
+      
+      crr <- cov2cor(cvr)
+      crr[] <- mean(crr[upper.tri(crr)], na.rm = TRUE)
+      diag(crr) <- 1
+      sdMat <- diag(sqrt(diag(cvr)))
+      cvr <- sdMat %*% crr %*% t(sdMat)
+      
+      norm.res <- data.table(mvtnorm::rmvnorm(dim(res)[1], sigma = cvr, method = 'chol'))
+      
+      if(na) {
+        
+        norm.res <- norm.res*(dta/dta) 
+      }
+      
+      gpa.val <- sapply(norm.res, function(x) {qgpa(pnorm(x), para)}) ###################
+      
+      return(gpa.val)
+    }, i, SIMPLIFY = FALSE)
+  }
+  
   
   structure(.Data = out,
             names = paste0('b_sample_',i),
@@ -78,6 +107,7 @@ fit.simsample <- function(smp, model_object) {
     trim <- as.numeric(as.character(formals(sim)$trim)[2:3])
   }
   
-  lapply(smp, function(x) {sim(x, dist = cl$dist, trim = trim)})
+  structure(.Data = lapply(smp, function(x) {sim(x, dist = cl$dist, trim = trim)}),
+            class = 'simsample')
 }
 

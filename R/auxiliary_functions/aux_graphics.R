@@ -57,8 +57,8 @@ gumbelplot <- function(model_object, dist = NULL, method = if ('ggplot2' %in% in
   if(method %in% c('ggplot', 'plotly')) {
     
     gp <- ggplot2::ggplot(res.gp) +
-      ggplot2::geom_line(ggplot2::aes(x = gumbel.variate, y = scaled.value, group = variable), colour = 'steelblue4', alpha = .5) +
-      ggplot2::geom_point(ggplot2::aes(x = gumbel.variate, y = scaled.value, group = variable), colour = 'grey15', fill = 'steelblue4', alpha = .5, shape = 21) +
+      ggplot2::geom_line(ggplot2::aes(x = gumbel.variate, y = scaled.value, group = variable), colour = 'steelblue4', alpha = .5, na.rm = T) +
+      ggplot2::geom_point(ggplot2::aes(x = gumbel.variate, y = scaled.value, group = variable), colour = 'grey15', fill = 'steelblue4', alpha = .5, shape = 21, na.rm = T) +
       ggplot2::geom_line(data = regional, ggplot2::aes(x = x, y = y), col = 'red4', lwd = .75) + 
       ggplot2::theme_bw() +
       ggplot2::labs(x = '-log(-log(p))', y = 'Value', title = 'Gumbel plot') +
@@ -75,11 +75,11 @@ gumbelplot <- function(model_object, dist = NULL, method = if ('ggplot2' %in% in
   }
 }
 
-growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, ribbon.1 = c(0.05, 0.95), ribbon.2 = c(0.25, 0.75), rp = T, return.period = c(5, 10, 20, 50, 100), method = if ('ggplot2' %in% installed.packages()[,'Package']) {'ggplot'} else {'base'}) {
+growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, outer_ribbon = c(0.05, 0.95), inner_ribbon = c(0.25, 0.75), rp = T, return.period = c(5, 10, 20, 50, 100), method = if ('ggplot2' %in% installed.packages()[,'Package']) {'ggplot'} else {'base'}) {
   
   # res (init res will need to be rewritten for nim)
   
-  prbs <- sort(c(ribbon.1, ribbon.2))
+  prbs <- sort(c(outer_ribbon, inner_ribbon))
   para <- model_object$REG
   
   if(is.null(dist)) {dist <- attr(model_object, 'sim.call')$dist}
@@ -88,7 +88,7 @@ growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, ribbon.1 =
   qaux <- data.table(rbindlist(lapply(fitted_bootstrap, function(x) {data.frame(q = do.call(paste0('q',dist), list(qs, x$REG)))}),
                                idcol = 'sample'), 
                      probs = seq_along(qs))
-  q <- qaux[, .(val = quantile(q, c(.05, .25, .75, .95)),
+  q <- qaux[, .(val = quantile(q, prbs),
                 q = c('rib_1_min', 'rib_2_min', 'rib_2_max', 'rib_1_max')), 
             by = probs]
   res.gc <- cbind(dcast(q, probs ~ q, value.var = 'val'),
@@ -174,7 +174,9 @@ growthcurve <- function (model_object, fitted_bootstrap, dist = NULL, ribbon.1 =
   }
 }
 
-qq <- function(model_object, dist = NULL, method = if ('ggplot2' %in% installed.packages()[,'Package']) {'ggplot'} else {'base'}) {
+qq <- function(...) {UseMethod('qq')}
+
+qq.sim <- function(model_object, dist = NULL, method = if ('ggplot2' %in% installed.packages()[,'Package']) {'ggplot'} else {'base'}) {
   
   dta <- as.data.table(model_object$data)
   para <- model_object$REG
@@ -224,7 +226,7 @@ qq <- function(model_object, dist = NULL, method = if ('ggplot2' %in% installed.
   if(method %in% c('ggplot', 'plotly')) {
     
     qq <- ggplot2::ggplot(res.qq) +
-      ggplot2::geom_qq(ggplot2::aes(sample = scaled.value, group = variable), geom = 'point', distribution = noquote(paste0('q', dist)), dparams = list(para), colour = 'grey15', fill = 'steelblue4', shape = 21) +
+      ggplot2::geom_qq(ggplot2::aes(sample = scaled.value, group = variable), geom = 'point', distribution = noquote(paste0('q', dist)), dparams = list(para), colour = 'grey15', fill = 'steelblue4', shape = 21, na.rm = T) +
       ggplot2::geom_abline(colour = ('red4')) +
       ggplot2::coord_fixed() +
       ggplot2::lims(x = c(0, max(res.qq$value/res.qq$sf, na.rm = T)),
@@ -242,6 +244,31 @@ qq <- function(model_object, dist = NULL, method = if ('ggplot2' %in% installed.
     return(qq)
   }
 }
+
+# qq.simsample <- function(model_object, fitted_bootstrap, dist = NULL, ribbon.1 = c(0.05, 0.95), ribbon.2 = c(0.25, 0.75), method = if ('ggplot2' %in% installed.packages()[,'Package']) {'ggplot'} else {'base'}) {
+#   
+#   dta <- as.data.table(model_object$data)
+#   para <- model_object$REG
+#   scaling.factor <- model_object$scaling_factor
+#   
+#   if(is.null(dist)) {dist <- attr(dta.fit, 'sim.call')$dist}
+#   
+#   prbs <- sort(c(ribbon.1, ribbon.2))
+#   
+#   xxx <- do.call(cbind, lapply(fitted_bootstrap, function(x) x$data))
+#   
+#   ########################################################
+#   
+#   qaux <- data.table(rbindlist(lapply(fitted_bootstrap, function(x) {data.frame(q = do.call(paste0('q',dist), list(qs, x$REG)))}),
+#                                idcol = 'sample'), 
+#                      probs = seq_along(qs))
+#   q <- qaux[, .(val = quantile(q, prbs),
+#                 q = c('rib_1_min', 'rib_2_min', 'rib_2_max', 'rib_1_max')), 
+#             by = probs]
+#   res.gc <- cbind(dcast(q, probs ~ q, value.var = 'val'),
+#                   data.table(gumbel.variate = -log(-log(qs)),
+#                              scaled.value = qgpa(qs, para)))
+# }
 
 ratiodiagram <- function(taus) {
   
